@@ -186,6 +186,38 @@ Please Remote Desktop Protocol **(RDP)** into either DC1 or DC2 to utilize the A
 4. What is PC1's gateway IP Address?
 5. What ports is PC1 listening on?
 
+> Solution
+>
+> 1. The IP Address of PC1 is 10.0.0.6
+>
+> ```powershell
+> Resolve-DnsName pc1
+> ```
+>
+> 2. Here is the following info
+>      1. Hyper-V UEFI Release v4.1
+>      2. en-US
+>      3. Microsoft Windows 10 Pro
+>      4. KB5034466, KB5034468, KB5011048, KB5015684...
+>
+> ```powershell
+> Enter-PSSession pc1
+> Get-ComputerInfo | Select-Object BiosCaption, KeyboardLayout, OSName, OSHotfixes    
+>```
+>
+> 3. Using DC1 for its DNS server (10.0.0.4)
+>
+>```powershell
+>Get-NetIPConfiguration
+>```
+>
+> 4. The Gateway IP Address is 10.0.0.1
+> 5. Will vary depending how many people are logged in
+>
+> ```powershell
+>Get-NetTCPConnection
+>```
+
 ## Question 9 (Local Enumeration)
 >
 > **Hint** Use a interactive Powershell remoting session. Please exit the session after the question.
@@ -193,6 +225,22 @@ Please Remote Desktop Protocol **(RDP)** into either DC1 or DC2 to utilize the A
 1. What are the local users on PC1?
 2. What is the SID for the best-duck user?
 3. By looking at the SID for the best-duck user what information can be established?
+
+> Solution
+>
+> 1. The local users are **best-duck, DefaultAccount, Guest, and WDAGUtilityAccount.**
+>
+> ```powershell
+> Get-LocalUser
+> ```
+>
+> 2. The SID is **S-1-5-21-2033867447-2489785829-455501711-500**
+>
+> ```powershell
+> Get-LocalUser -Name "best-duck" | Select-Object Name, SID
+>```
+>
+> 3. The best-duck SID is of the form S-1-5-domain-500 therefore it can be concluded that the user is the local administrator. See page 25.
 
 ## Question 10 (Local Enumeration)
 >
@@ -202,6 +250,23 @@ Please Remote Desktop Protocol **(RDP)** into either DC1 or DC2 to utilize the A
 2. What users are a member of the local Administrators group?
 3. (True | False) The user best-duck has domain administrator privileges?
 
+> Solution
+>
+> 1. There are 19 local groups on PC1.
+>
+> ```powershell
+> $groups = Get-LocalGroup
+> $groups.Count
+>```
+>
+> 2. The user **best-duck** and the group **Domain Admins** are members of the local Administrators group.
+>
+> ```powershell
+> Get-LocalGroupMember -Group "Administrators"
+>```
+>
+> 3. **False.** The user best-duck only has administrator access on pc1.
+>
 ## Question 11 (Network Tools)
 
 1. Ping PC1
@@ -209,20 +274,75 @@ Please Remote Desktop Protocol **(RDP)** into either DC1 or DC2 to utilize the A
 3. How many router hops is PC1 away?
 4. Based on the router hops what can be concluded about PC1's subnet?
 
+> Solution
+>
+> ```powershell
+> Test-NetConnection -ComputerName pc1
+>```
+>
+> 2. Pinging PC1 gives the IP Address of 10.0.0.6
+> 3. PC1 is only 1 hop away.
+>
+> ```powershell
+> tracert.exe pc1
+>```
+>
+> 4. PC1 and DC1 are in the same subnet. Moreover they share the same gateway router
+
 ## Question 12 (Local Enumeration)
 
 1. On PC1 what is the status of the WSearch service?
 2. Please Restart the WSearch service
 
+> Solution
+>
+> 1. The WSearch service is running
+>
+> ```powershell
+> Get-Service -Name WSearch
+>```
+>
+> To restart the WSearch service use the following command
+>
+> ```powershell
+> Restart-Service -Name WSearch
+> ```
+
 ## Question 13 (Local Enumeration)
 
 1. What is PID for the system process on PC1?
 
+> Solution
+>
+> 1. The PID for the system process is 4
+>
+> ```powershell
+> Get-Process -Name System
+>```
+>
 ## Question 14 (Local Effects)
 
 1. Create a scheduled task that opens calc.exe every minute. Please name the task 1minCalc\<YOUR NAME>
 2. Wait for the scheduled task to perform its action
 3. Delete the scheduled task
+
+> Solution
+> The following commands will create the scheduled task
+>
+> ```powershell
+> $action = New-ScheduledTaskAction -Execute "calc.exe"
+> $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 1)
+> $task = New-ScheduledTask -Action $action -Trigger $trigger
+> Register-ScheduledTask -TaskName "1minCalc$env:USERNAME" -InputObject $task
+> Start-ScheduledTask -TaskName "1minCalc$env:USERNAME"
+> ```
+>
+> 2. The calculator program should appear
+> 3. The following command will delete the task
+>
+> ```powershell
+> Unregister-ScheduledTask -TaskName "1minCalc$env:USERNAME"
+>```
 
 ## Question 15 (Local Admin)
 
@@ -230,26 +350,71 @@ Please Remote Desktop Protocol **(RDP)** into either DC1 or DC2 to utilize the A
 2. Kill that process using its PID
 3. (True | False) A program can only have one running process?
 
+> Solution
+>
+> 1. The following command will start the explorer program
+>
+> ```powershell
+> Start-Process explorer.exe
+>```
+>
+> 3. **False**. A program can create many running processes.
+>
 ## Question 15 (Local Enumeration)
 
 1. On PC1 what is the value of the BEST_SHOW environment variable?
 
+> Solution
+>
+> 1. The value of the BEST_SHOW environment variable is Rick and Morty.
+>
+> ```powershell
+> Invoke-Command -ComputerName PC1 -ScriptBlock {$env:BEST_SHOW}
+>```
+>
 ## Question 16 (Local Enumeration)
 
 1. What is the absolute path of ntoskrnl.exe?
 2. What is the absolute path of powershell.exe?
 
+> Solution
+>
+> 1. The absolute path is C:\Windows\System32\ntoskrnl.exe
+>
+> ```powershell
+> Get-Command ntoskrnl.exe
+>```
+>
+> 2. The absolute path is C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+>
+> ```powershell
+>  Get-Command powershell.exe
+>```
+>
 ## Question 17 (Local Enumeration)
 
 1. Find the OS's installer service (installservice)
 2. What is the state/status and start type of the installservice?
 
+> Solution
+> The service is stopped. The start type is manual.
+>
+> ```powershell
+> Get-Service -Name installservice | Select-Object Name, Status, StartType
+>```
+>
 ## Question 18 (Registry)
 
 > Use the following  registry path: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W3SVC
 
 1. What service does W3SVC depend on?
 2. What is the image path for this service?
+
+> Solution
+> Use the regedit.exe GUI to view details
+>
+> 1. Depends on the WAS HTTP service.
+> 2. The image path is %windir%\system32\svchost.exe -k iissvcs
 
 ## Question 19 (File ACLs)
 >
@@ -260,8 +425,34 @@ Please Remote Desktop Protocol **(RDP)** into either DC1 or DC2 to utilize the A
 2. What is the contents of the The Raven.txt
 3. Who has access to The Raven.txt file?
 
+> Solution
+>
+> 1. There are 2 files on the share.
+> 2. The Raven by Edgar Allan Poe
+> 3. The following command will show who has access
+>
+> ```powershell
+> Get-Acl '.\The Raven.txt' | Select-Object -ExpandProperty Access
+>```
+>
 ## Question 20 (File Attributes)
 
 1. What are the file attributes of The Raven.txt
 2. What are the file attribute of the nuke-codes.txt
 3. (True | False) The file nuke-codes.txt is visible in the file explorer?
+
+> Solution
+>
+> 1. A - Archive
+>
+> ```powershell
+> attrib.exe '.\The Raven.txt'
+> ```
+>
+> 2. A - Archive and H - Hidden
+>
+> ```powershell
+> attrib.exe '.\nuke-codes.txt'
+> ```
+>
+> 3. **False.** Since the file is hidden it will not appear in the file explorer by default.
