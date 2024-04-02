@@ -41,6 +41,7 @@ Please Remote Desktop Protocol **(RDP)** into either DC1 or DC2 to utilize the A
 >```
 >
 > 4. **True.** Whenever a computer joins a domain it is assigned a unique SID.
+>
 ## Question 2 (Group Enumeration)
 
 1. How many groups exist in the domain?
@@ -49,15 +50,56 @@ Please Remote Desktop Protocol **(RDP)** into either DC1 or DC2 to utilize the A
 4. How many users are a member of the Domain Admins group?
 5. (True | False) Domain Admins only have administrator privileges on domain controllers?
 
+> Solution
+>
+> 1. There are 48 groups in the domain.
+>
+> ```powershell
+>   $groups = Get-ADGroup -Filter *
+>   $groups.Count
+> ```
+>
+> 2. An example SID is **S-1-5-21-73388235-3422076780-2126075944-1104** which is the SID for the DnsAdmins group
+> 3. **True**
+> 4. There are 10 members in the Domain Admins groups
+>
+> ```powershell
+>   $adminGroup = Get-ADGroupMember -Identity "Domain Admins"
+>   $adminGroup.Count
+>```
+>
+> 5. **False.** Domain Admins have administartor privileges on all systems in the domain
+
 ## Question 3 (Forest Enumeration)
 
 1. What domain is considered the root domain?
 2. (True | False) A domain does not have to exist inside a forest?
 
+> Solution
+>
+> 1. The root domain is madduck.local
+>
+> ```powershell
+>   Get-ADForest | Select-Object RootDomain
+>```
+>
+> 2. **False**. A domain must exist inside a forest.
+
 ## Question 4 (Organizational Units Enumeration)
 
 1. How many OUs exist in the domain?
 2. (True | False) Organizational Units are a way to logically organize AD objects in a domain?
+
+> Solution
+>
+> 1. There are 4 organizational units in the domain
+>
+> ```powershell
+>   $units = Get-ADOrganizationalUnit -Filter *
+>   $units.Count
+>```
+>
+> 2. **True**
 
 ## Question 5 (Domain Enumeration)
 
@@ -66,15 +108,69 @@ Please Remote Desktop Protocol **(RDP)** into either DC1 or DC2 to utilize the A
 3. How many computers in the domain are using Windows Server 2022?
 4. How many computers in the domain are using Windows Server 2016?
 
+> Solution
+>
+> 1. There are 2 computers using windows 10. Both pc1 and pc2 are using windows 10.
+>
+> ```powershell
+>  $windows10 = Get-ADComputer -Filter * -Properties * | Where-Object OperatingSystem  -Match "Windows 10"
+>  $windows10.Count
+>```
+>
+> 2. **False**. A domain controller must use Windows Server.
+> 3. There are 2 computers using Windows Server 2022. Both DC1 and DC2 are using Windows Server 2022.
+>
+>  ```powershell
+>   $server2022 = Get-ADComputer -Filter * -Properties * | Where-Object OperatingSystem  -Match "Windows Server 2022"
+>   $server2022.Count
+>```
+>
+> 4. There are 0 computers using Windows Server 2016.
+>
+> ```powershell
+>  $server2016 = Get-ADComputer -Filter * -Properties * | Where-Object OperatingSystem  -Match "Windows Server 2016"
+>  $server2016.Count
+>```
+
 ## Question 6 (User Enumeration)
 
 1. How many users exist in the domain?
 2. (True | False) Only Domain Admin users get SIDs?
 
+> Solution
+>
+> 1. There are 12 users in the domain
+>
+> ```powershell
+>$users = Get-ADUser -Filter *
+>$users.Count
+>```
+>
+> 2. **False.** All users get a SID.
+
 ## Question 7 (Domain Group Policy Object Enumeration)
 
 1. How many group policy objects exist in the domain?
 2. Give one GPO name.
+
+> Solution
+>
+> 1. There are 3 group policy objects in the domain
+>
+> ```powershell
+>   $gpos = Get-GPO -All
+>   $gpos.Count
+>```
+>
+>2. The names of each GPO are:
+>
+> - Default Domain Policy
+> - RDP Connections
+> - Default Domain Controllers Policy
+>
+> ```powershell
+> Get-GPO -All | Select-Object DisplayName
+>```
 
 ## Question 8 (Local Enumeration)
 >
