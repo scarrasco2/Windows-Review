@@ -14,6 +14,33 @@ Please Remote Desktop Protocol **(RDP)** into either DC1 or DC2 to utilize the A
 3. Please provide at least one computer's SID?
 4. (True | False) Computer SIDs are unique for each computer in a Active Directory Domain?
 
+> Solution
+>
+> 1. The are 4 computers.
+>
+> ```powershell  
+>    $computers = Get-ADComputer -Filter *
+>    $computers.Count   
+>```
+>
+> 2. The computers names are **DC1, DC2, pc1**, and **pc2**
+>
+> ```powershell
+>   Get-ADComputer -Filter * | Select-Object Name
+>```
+>
+> 3. Here is the list of all the computers SIDs:
+>
+> - **DC1 SID:** S-1-5-21-73388235-3422076780-2126075944-1003
+> - **DC2 SID:** S-1-5-21-73388235-3422076780-2126075944-1107
+> - **pc1 SID:** S-1-5-21-73388235-3422076780-2126075944-2105
+> - **pc2 SID:** S-1-5-21-73388235-3422076780-2126075944-1611
+>
+> ```powershell
+>   Get-ADComputer -Filter * | Select-Object Name, SID
+>```
+>
+> 4. **True.** Whenever a computer joins a domain it is assigned a unique SID.
 ## Question 2 (Group Enumeration)
 
 1. How many groups exist in the domain?
